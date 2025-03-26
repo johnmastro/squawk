@@ -10,6 +10,7 @@ extern crate lazy_static;
 use crate::errors::CheckSqlError;
 use crate::rules::adding_required_field;
 use crate::rules::ban_concurrent_index_creation_in_transaction;
+use crate::rules::ban_create_domain;
 use crate::rules::ban_drop_not_null;
 use crate::rules::prefer_big_int;
 use crate::rules::prefer_identity;
@@ -116,6 +117,15 @@ lazy_static! {
             ),
             ViolationMessage::Help(
                 "Build the index outside any transactions.".into()
+            ),
+        ],
+    },
+    SquawkRule {
+        name: RuleViolationKind::BanCreateDomain,
+        func: ban_create_domain,
+        messages: vec![
+            ViolationMessage::Note(
+                "Domains have poor support for online migrations".into()
             ),
         ],
     },
@@ -365,9 +375,7 @@ lazy_static! {
             ),
         ],
     },
-    // generator::new-rule-above
     ];
-
 }
 
 pub fn check_sql(
@@ -405,7 +413,6 @@ pub fn check_sql_with_rule(
     }
 
     errs.sort_by_key(|v| v.span.start);
-
     Ok(errs)
 }
 
